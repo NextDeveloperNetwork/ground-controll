@@ -7,6 +7,8 @@
     <title>iNav Ground Station - SpeedyBee F405 Wing</title>
     <meta name="description"
         content="Professional ground station for iNav 8.0.1 with ExpressLRS telemetry, GPS tracking, and live camera feed">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; connect-src 'self' ws: wss: https: http:;">
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
@@ -504,7 +506,7 @@
     <script src="msp.js"></script>
     <script src="crsf.js"></script>
     <script src="instruments.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
