@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iNav Ground Station - SpeedyBee F405 Wing</title>
+    <meta name="description"
+        content="Professional ground station for iNav 8.0.1 with ExpressLRS telemetry, GPS tracking, and live camera feed">
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3b82f6">
+
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="icon-btn" id="sidebarToggle" title="Toggle Sidebar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h18M3 6h18M3 18h18" />
+                    </svg>
+                </button>
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 4L4 10L16 16L28 10L16 4Z" fill="url(#gradient1)" />
+                        <path d="M4 16L16 22L28 16" stroke="url(#gradient2)" stroke-width="2" stroke-linecap="round" />
+                        <path d="M4 22L16 28L28 22" stroke="url(#gradient2)" stroke-width="2" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient1" x1="4" y1="4" x2="28" y2="16">
+                                <stop offset="0%" stop-color="#3b82f6" />
+                                <stop offset="100%" stop-color="#8b5cf6" />
+                            </linearGradient>
+                            <linearGradient id="gradient2" x1="4" y1="16" x2="28" y2="28">
+                                <stop offset="0%" stop-color="#3b82f6" />
+                                <stop offset="100%" stop-color="#8b5cf6" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <h1>iNav GS</h1>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div class="connection-status" id="connectionStatus">
+                    <div class="status-indicator disconnected"></div>
+                    <span>Disconnected</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button class="icon-btn" id="settingsBtn" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                            d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="mainSidebar">
+                <div class="connection-panel">
+                    <h2>Connection</h2>
+
+                    <div class="connection-type-selector">
+                        <button class="connection-type-btn active" data-type="usb">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <path
+                                    d="M10 2v16M10 2l3 3M10 2L7 5M6 10h8M6 10a2 2 0 11-4 0 2 2 0 014 0zM18 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            USB Direct
+                        </button>
+                        <button class="connection-type-btn" data-type="elrs">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <path
+                                    d="M8.111 16.404a5.5 5.5 0 017.778 0M12 12a9 9 0 00-9-9m18 0a9 9 0 00-9 9m-6 0a3 3 0 016 0" />
+                            </svg>
+                            ExpressLRS
+                        </button>
+                    </div>
+
+                    <!-- USB Connection -->
+                    <div class="connection-config" id="usbConfig">
+                        <div class="form-group">
+                            <label>Serial Port</label>
+                            <select id="portSelect" class="form-control">
+                                <option value="">Select Port...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Baud Rate</label>
+                            <select id="baudRate" class="form-control">
+                                <option value="115200" selected>115200</option>
+                                <option value="57600">57600</option>
+                                <option value="38400">38400</option>
+                                <option value="19200">19200</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" id="connectBtn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 2a.5.5 0 01.5.5v11a.5.5 0 01-1 0v-11A.5.5 0 018 2z" />
+                            </svg>
+                            Connect
+                        </button>
+                    </div>
+
+                    <!-- ELRS Connection -->
+                    <div class="connection-config hidden" id="elrsConfig">
+                        <div class="form-group">
+                            <label>Receiver Port</label>
+                            <select id="elrsPortSelect" class="form-control">
+                                <option value="">Select Port...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Baud Rate</label>
+                            <select id="elrsBaudRate" class="form-control">
+                                <option value="420000">420000 (ELRS)</option>
+                                <option value="115200">115200</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" id="elrsConnectBtn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 2a.5.5 0 01.5.5v11a.5.5 0 01-1 0v-11A.5.5 0 018 2z" />
+                            </svg>
+                            Connect
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recording Controls -->
+                <div class="recording-panel">
+                    <h2>Data Logging</h2>
+                    <button class="btn btn-secondary" id="recordBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <circle cx="8" cy="8" r="4" />
+                        </svg>
+                        Start Recording
+                    </button>
+                    <div class="recording-info hidden" id="recordingInfo">
+                        <div class="recording-indicator"></div>
+                        <span id="recordingTime">00:00:00</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main View -->
+            <main class="main-view">
+                <!-- Unified Dashboard -->
+                <div class="dashboard-container">
+                    <!-- Top Row: Camera and Instruments -->
+                    <div class="dashboard-top">
+                        <!-- Camera Feed -->
+                        <div class="dashboard-camera" id="panelCamera">
+                            <div class="dashboard-section-header">
+                                <h3>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path
+                                            d="M15 4H11l-1-2H6L5 4H1c-.6 0-1 .4-1 1v8c0 .6.4 1 1 1h14c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zM8 12c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4z" />
+                                    </svg>
+                                    FPV Camera
+                                </h3>
+                                <div class="header-controls">
+                                    <div class="camera-status" id="cameraStatus">
+                                        <div class="status-dot"></div>
+                                        <span>Searching...</span>
+                                    </div>
+                                    <button class="panel-btn maximize-btn" title="Maximize">□</button>
+                                    <button class="panel-btn collapse-btn" title="Collapse">_</button>
+                                </div>
+                            </div>
+                            <div class="panel-content camera-view">
+                                <div class="camera-placeholder" id="cameraPlaceholder">
+                                    <svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor" opacity="0.3">
+                                        <path
+                                            d="M42 12H33l-3-6H18l-3 6H6c-3.3 0-6 2.7-6 6v21c0 3.3 2.7 6 6 6h36c3.3 0 6-2.7 6-6V18c0-3.3-2.7-6-6-6zM24 37.5c-6.6 0-12-5.4-12-12s5.4-12 12-12 12 5.4 12 12-5.4 12-12 12z" />
+                                    </svg>
+                                    <p>Auto-detecting USB camera...</p>
+                                    <button class="btn btn-secondary btn-sm" id="manualCameraBtn">Manual Setup</button>
+                                </div>
+                                <video id="cameraFeed" class="camera-feed hidden" autoplay playsinline></video>
+                                <img id="mjpegFeed" class="camera-feed hidden" alt="Camera Feed" />
+
+                                <div class="camera-overlay">
+                                    <div class="camera-overlay-item">
+                                        <span class="overlay-label">ALT</span>
+                                        <span class="overlay-value" id="overlayAlt">0 m</span>
+                                    </div>
+                                    <div class="camera-overlay-item">
+                                        <span class="overlay-label">SPD</span>
+                                        <span class="overlay-value" id="overlaySpeed">0 km/h</span>
+                                    </div>
+                                    <div class="camera-overlay-item">
+                                        <span class="overlay-label">BAT</span>
+                                        <span class="overlay-value" id="overlayBat">0.0 V</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Flight Instruments -->
+                        <div class="dashboard-instruments" id="panelInstruments">
+                            <div class="dashboard-section-header">
+                                <h3>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <circle cx="8" cy="8" r="6" stroke="currentColor" fill="none" />
+                                        <path d="M8 2v6l3 3" />
+                                    </svg>
+                                    Instruments
+                                </h3>
+                                <div class="header-controls">
+                                    <button class="panel-btn collapse-btn" title="Collapse">_</button>
+                                </div>
+                            </div>
+                            <div class="panel-content instruments-compact">
+                                <div class="instrument-compact">
+                                    <canvas id="horizonCanvas" width="200" height="200"></canvas>
+                                    <div class="instrument-label">Horizon</div>
+                                </div>
+                                <div class="instrument-compact">
+                                    <canvas id="compassCanvas" width="200" height="200"></canvas>
+                                    <div class="instrument-label">Compass</div>
+                                </div>
+                                <div class="instrument-compact">
+                                    <canvas id="varioCanvas" width="200" height="200"></canvas>
+                                    <div class="instrument-label">Variometer</div>
+                                </div>
+                                <div class="instrument-compact">
+                                    <canvas id="altitudeGraph" width="200" height="200"></canvas>
+                                    <div class="instrument-label">Altitude</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row: Map and Extended Telemetry -->
+                    <div class="dashboard-bottom">
+                        <!-- Map -->
+                        <div class="dashboard-map" id="panelMap">
+                            <div class="dashboard-section-header">
+                                <h3>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M1 5v9l4-2.5 5 2.5 4-2.5V2.5l-4 2.5-5-2.5L1 5z" />
+                                    </svg>
+                                    GPS Map
+                                </h3>
+                                <div class="header-info">
+                                    <div class="map-coords">
+                                        <span id="mapLat">--</span>, <span id="mapLon">--</span>
+                                    </div>
+                                    <div class="header-controls">
+                                        <button class="panel-btn maximize-btn" title="Maximize">□</button>
+                                        <button class="panel-btn collapse-btn" title="Collapse">_</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel-content map-container-inner">
+                                <div id="map" class="map-view"></div>
+                                <div class="map-info-overlay">
+                                    <div class="map-info-item">
+                                        <span class="info-icon">📍</span>
+                                        <span class="info-text">Dist: <strong id="mapDistance">--</strong></span>
+                                    </div>
+                                    <div class="map-info-item">
+                                        <span class="info-icon">🛰️</span>
+                                        <span class="info-text">Sats: <strong id="mapSats">0</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Extended Telemetry -->
+                        <div class="dashboard-telemetry" id="panelTelemetry">
+                            <div class="dashboard-section-header">
+                                <h3>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path
+                                            d="M2 2h12v2H2V2zm0 4h12v2H2V6zm0 4h12v2H2v-2zm0 4h12v2H2v-2zm0 4h12v2H2v-2z" />
+                                    </svg>
+                                    Data
+                                </h3>
+                                <div class="header-controls">
+                                    <button class="btn btn-secondary btn-sm" id="exportDataBtn">Export</button>
+                                    <button class="panel-btn collapse-btn" title="Collapse">_</button>
+                                </div>
+                            </div>
+                            <div class="panel-content telemetry-extended">
+                                <div class="telemetry-group">
+                                    <div class="group-title">GPS</div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Fix</span>
+                                        <span class="telem-value" id="extGpsStatus">No Fix</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Sats</span>
+                                        <span class="telem-value" id="extSatellites">0</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Lat</span>
+                                        <span class="telem-value" id="extLatitude">--</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Lon</span>
+                                        <span class="telem-value" id="extLongitude">--</span>
+                                    </div>
+                                </div>
+
+                                <div class="telemetry-group">
+                                    <div class="group-title">Flight</div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Alt</span>
+                                        <span class="telem-value" id="extAltitude">0 m</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Speed</span>
+                                        <span class="telem-value" id="extSpeed">0 km/h</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Hdg</span>
+                                        <span class="telem-value" id="extHeading">0°</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Dist</span>
+                                        <span class="telem-value" id="extDistance">0 m</span>
+                                    </div>
+                                </div>
+
+                                <div class="telemetry-group">
+                                    <div class="group-title">Power</div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Bat</span>
+                                        <span class="telem-value" id="extBattery">0.0 V</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Curr</span>
+                                        <span class="telem-value" id="extCurrent">0.0 A</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Mode</span>
+                                        <span class="telem-value" id="extFlightMode">DISARMED</span>
+                                    </div>
+                                </div>
+
+                                <div class="telemetry-group">
+                                    <div class="group-title">Link (ELRS)</div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">RSSI</span>
+                                        <span class="telem-value" id="extRssi">0 dBm</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">LQ</span>
+                                        <span class="telem-value" id="extLinkQuality">--</span>
+                                    </div>
+                                    <div class="telemetry-row">
+                                        <span class="telem-label">Tx Pwr</span>
+                                        <span class="telem-value" id="extTxPower">-- mW</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ... Modals remain the same ... -->
+    <!-- Settings Modal -->
+    <div class="modal hidden" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="modal-close" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Map Settings</h3>
+                    <div class="form-group">
+                        <label>Map Provider</label>
+                        <select id="mapProvider" class="form-control">
+                            <option value="osm">OpenStreetMap</option>
+                            <option value="satellite">Satellite</option>
+                            <option value="terrain">Terrain</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Units</h3>
+                    <div class="form-group">
+                        <label>Distance</label>
+                        <select id="distanceUnit" class="form-control">
+                            <option value="metric">Metric (m/km)</option>
+                            <option value="imperial">Imperial (ft/mi)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Speed</label>
+                        <select id="speedUnit" class="form-control">
+                            <option value="kmh">km/h</option>
+                            <option value="mph">mph</option>
+                            <option value="ms">m/s</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Data Logging</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="autoRecord" class="checkbox">
+                            Auto-start recording on connection
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Log Interval (ms)</label>
+                        <input type="number" id="logInterval" class="form-control" value="1000" min="100" step="100">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelSettingsBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveSettingsBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Camera Setup Modal -->
+    <div class="modal hidden" id="manualCameraModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Manual Camera Setup</h2>
+                <button class="modal-close" id="closeManualCameraBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>USB Camera</h3>
+                    <div class="form-group">
+                        <label>Select Camera Device</label>
+                        <select id="cameraDeviceSelect" class="form-control">
+                            <option value="">Loading cameras...</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="connectUsbCameraBtn">Connect USB Camera</button>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Network Stream (Skydroid WiFi)</h3>
+                    <div class="form-group">
+                        <label>Stream URL</label>
+                        <input type="text" id="streamUrlInput" class="form-control"
+                            placeholder="http://192.168.169.1:8080/video.mjpg"
+                            value="http://192.168.169.1:8080/video.mjpg">
+                    </div>
+                    <div class="form-group">
+                        <label>Common Skydroid URLs:</label>
+                        <div class="url-presets">
+                            <button class="btn btn-secondary btn-sm preset-url"
+                                data-url="http://192.168.169.1:8080/video.mjpg">
+                                192.168.169.1:8080
+                            </button>
+                            <button class="btn btn-secondary btn-sm preset-url" data-url="http://192.168.169.1:8080/">
+                                192.168.169.1 (alt)
+                            </button>
+                            <button class="btn btn-secondary btn-sm preset-url"
+                                data-url="http://192.168.1.1:8080/video.mjpg">
+                                192.168.1.1:8080
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="connectStreamBtn">Connect Stream</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="usb-camera.js"></script>
+    <script src="msp.js"></script>
+    <script src="crsf.js"></script>
+    <script src="instruments.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed: ', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
+```
