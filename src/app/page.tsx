@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { io, Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import { MSP } from '@/lib/msp';
 import { CRSF } from '@/lib/crsf';
 import { USBCamera } from '@/lib/usb-camera';
@@ -49,24 +49,28 @@ export default function Home() {
   const telemetryRef = useRef(INITIAL_TELEMETRY);
 
   useEffect(() => {
-    // Initialize Socket.IO
-    const newSocket = io();
-    setSocket(newSocket);
+    // Initialize Socket.IO only on client
+    let newSocket: Socket;
 
-    newSocket.on('connect', () => {
-      console.log('Connected to Relay Server');
-    });
+    import('socket.io-client').then(({ io }) => {
+      newSocket = io();
+      setSocket(newSocket);
 
-    newSocket.on('telemetry_update', (data: TelemetryData) => {
-      if (!msp.isConnected && !crsf.isConnected) {
-        updateTelemetry(data);
-        setConnectionType('remote');
-        setIsConnected(true);
-      }
+      newSocket.on('connect', () => {
+        console.log('Connected to Relay Server');
+      });
+
+      newSocket.on('telemetry_update', (data: TelemetryData) => {
+        if (!msp.isConnected && !crsf.isConnected) {
+          updateTelemetry(data);
+          setConnectionType('remote');
+          setIsConnected(true);
+        }
+      });
     });
 
     return () => {
-      newSocket.disconnect();
+      if (newSocket) newSocket.disconnect();
     };
   }, [msp.isConnected, crsf.isConnected]);
 
