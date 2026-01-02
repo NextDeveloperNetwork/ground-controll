@@ -23,6 +23,7 @@ const INITIAL_TELEMETRY: TelemetryData = {
   rssi: 0,
   flightMode: 'DISARMED',
   armed: false
+
 };
 
 export default function Home() {
